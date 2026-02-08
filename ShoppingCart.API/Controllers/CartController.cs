@@ -22,7 +22,22 @@ namespace ShoppingCart.API.Controllers
         public IActionResult GetItems()
         {
             var items = _cartService.GetItems();
-            return Ok(items);
+            if (!items.Any())
+            {
+                return Ok(new CartResponse
+                {
+                    HasItems = false,
+                    Message = "No items in the cart",
+                    Items = []
+                });
+            }
+
+            return Ok(new CartResponse
+            {
+                HasItems = true,
+                Message = "Cart items retrieved successfully",
+                Items = items
+            });
         }
 
         [HttpPost]
