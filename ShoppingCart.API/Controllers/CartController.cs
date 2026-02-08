@@ -22,13 +22,16 @@ namespace ShoppingCart.API.Controllers
         public IActionResult GetItems()
         {
             var items = _cartService.GetItems();
+            var summary = _cartService.GetCartSummary();
             if (!items.Any())
             {
                 return Ok(new CartResponse
                 {
                     HasItems = false,
                     Message = "No items in the cart",
-                    Items = []
+                    Items = [],
+                    SummaryDto = summary
+
                 });
             }
 
@@ -36,7 +39,9 @@ namespace ShoppingCart.API.Controllers
             {
                 HasItems = true,
                 Message = "Cart items retrieved successfully",
-                Items = items
+                Items = items,
+                SummaryDto = summary
+
             });
         }
 

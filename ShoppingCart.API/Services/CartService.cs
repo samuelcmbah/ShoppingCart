@@ -60,4 +60,14 @@ public class CartService : ICartService
     {
         return _items.AsReadOnly();
     }
+
+    public CartSummaryDto GetCartSummary()
+    {
+        return new CartSummaryDto
+        {
+            UniqueItems = _items.Count,
+            TotalQuantity = _items.Sum(i => i.Quantity),
+            TotalAmount = _items.Sum(i => i.Price)
+        };
+    }
 }

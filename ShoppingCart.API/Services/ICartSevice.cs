@@ -13,4 +13,6 @@ public interface ICartService
     Result<bool> RemoveItem(Guid itemId);
 
     IReadOnlyCollection<CartItem> GetItems();
+
+    CartSummaryDto GetCartSummary();
 }
