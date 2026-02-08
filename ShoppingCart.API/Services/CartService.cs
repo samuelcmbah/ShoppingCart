@@ -10,25 +10,17 @@ public class CartService : ICartService
 
     public Result<CartItem> AddItem(AddItemRequest request)
     {
-        if (request.Quantity <= 0)
-        {
-            return Result<CartItem>.Failure("Quantity must be greater than zero.");
+        var itemResult = CartItem.Create(
+            request.ProductName,
+            request.Price,
+            request.Quantity);
+
+        if (!itemResult.IsSuccess) {
+            return itemResult;
         }
-        if (request.Price <= 0)
-        {
-            return Result<CartItem>.Failure("Price must be greater than zero.");
-        }
+        _items.Add(itemResult.Value);
 
-        var item = new CartItem
-        {
-            ProductName = request.ProductName,
-            Price = request.Price,
-            Quantity = request.Quantity
-        };
-
-        _items.Add(item);
-
-        return Result<CartItem>.Success(item);
+        return itemResult;
     }
 
     public Result<CartItem> UpdateItem(Guid itemId, UpdateItemRequest request)
@@ -40,12 +32,12 @@ public class CartService : ICartService
             return Result<CartItem>.Failure("Item not found in cart.");
         }
 
-        if (request.Quantity <= 0)
-        {
-            return Result<CartItem>.Failure("Quantity must be greater than zero.");
-        }
+        var result = item.UpdateQuantity(request.Quantity);
 
-        item.Quantity = request.Quantity;
+        if (!result.IsSuccess)
+        {
+            return Result<CartItem>.Failure(result.Error);
+        }
 
         return Result<CartItem>.Success(item);
     }

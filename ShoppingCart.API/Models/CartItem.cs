@@ -1,22 +1,45 @@
-﻿namespace ShoppingCart.Api.Models;
+﻿using ShoppingCart.Api.Common;
 
-/// <summary>
-/// Represents an item in the shopping cart
-/// </summary>
+namespace ShoppingCart.Api.Models;
+
+
 public class CartItem
 {
-    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid Id { get; private set; } = Guid.NewGuid();
+    public string ProductName { get; private set; } = default!;
+    public decimal Price { get; private set; }
+    public int Quantity { get; private set; }
+    public DateTime AddedAt { get; private set; } = DateTime.UtcNow;
 
-    public string ProductName { get; set; } = string.Empty;
+    private CartItem()
+    {
 
-    public decimal Price { get; set; }
+    }
 
-    public int Quantity { get; set; }
+    public static Result<CartItem> Create(string productName, decimal price, int quantity)
+    {
+        if (price <= 0)
+            return Result<CartItem>.Failure("Price must be greater than zero.");
 
-    public DateTime AddedAt { get; set; } = DateTime.UtcNow;
+        if (quantity <= 0)
+            return Result<CartItem>.Failure("Quantity must be greater than zero.");
 
-    /// <summary>
-    /// Calculates the total price for this cart item
-    /// </summary>
+        return Result<CartItem>.Success(new CartItem
+        {
+            ProductName = productName,
+            Price = price,
+            Quantity = quantity
+        });
+    }
+
+    public Result<bool> UpdateQuantity(int quantity)
+    {
+        if (quantity <= 0)
+            return Result<bool>.Failure("Quantity must be greater than zero.");
+
+        Quantity = quantity;
+        return Result<bool>.Success(true);
+    }
+
     public decimal TotalPrice => Price * Quantity;
 }

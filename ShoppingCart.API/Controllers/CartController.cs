@@ -18,6 +18,7 @@ namespace ShoppingCart.API.Controllers
 
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public IActionResult GetItems()
         {
             var items = _cartService.GetItems();
