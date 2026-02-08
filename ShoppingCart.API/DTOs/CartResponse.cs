@@ -8,6 +8,6 @@ namespace ShoppingCart.API.DTOs
         public string Message { get; set; } = string.Empty;
         public IReadOnlyCollection<CartItem> Items { get; set; } = [];
 
-        public CartSummaryDto SummaryDto { get; set; }
+        public CartSummaryDto SummaryDto { get; set; } = new();
     }
 }

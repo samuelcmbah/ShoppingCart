@@ -6,7 +6,7 @@ namespace ShoppingCart.Api.Services;
 
 public class CartService : ICartService
 {
-    private readonly List<CartItem> _items = new();
+    private readonly List<CartItem> _items = [];
 
     public Result<CartItem> AddItem(AddItemRequest request)
     {
@@ -15,10 +15,11 @@ public class CartService : ICartService
             request.Price,
             request.Quantity);
 
-        if (!itemResult.IsSuccess) {
+        if (!itemResult.IsSuccess)
+        {
             return itemResult;
         }
-        _items.Add(itemResult.Value);
+        _items.Add(itemResult.Data!);
 
         return itemResult;
     }
@@ -29,14 +30,17 @@ public class CartService : ICartService
 
         if (item is null)
         {
-            return Result<CartItem>.Failure("Item not found in cart.");
+            return Result<CartItem>.Failure("NOT_FOUND", "Item not found in cart.");
         }
 
         var result = item.UpdateQuantity(request.Quantity);
 
         if (!result.IsSuccess)
         {
-            return Result<CartItem>.Failure(result.Error);
+            return Result<CartItem>.Failure(
+                result.Error!.Code,
+                result.Error.Message
+            );
         }
 
         return Result<CartItem>.Success(item);
@@ -48,7 +52,7 @@ public class CartService : ICartService
 
         if (item is null)
         {
-            return Result<bool>.Failure("Item not found in cart.");
+            return Result<bool>.Failure("NOT_FOUND", "Item not found in cart.");
         }
 
         _items.Remove(item);

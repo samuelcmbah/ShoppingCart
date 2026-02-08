@@ -19,10 +19,10 @@ public class CartItem
     public static Result<CartItem> Create(string productName, decimal price, int quantity)
     {
         if (price <= 0)
-            return Result<CartItem>.Failure("Price must be greater than zero.");
+            return Result<CartItem>.Failure("BAD_REQUEST", "Price must be greater than zero.");
 
         if (quantity <= 0)
-            return Result<CartItem>.Failure("Quantity must be greater than zero.");
+            return Result<CartItem>.Failure("BAD_REQUEST", "Quantity must be greater than zero.");
 
         return Result<CartItem>.Success(new CartItem
         {
@@ -35,7 +35,7 @@ public class CartItem
     public Result<bool> UpdateQuantity(int quantity)
     {
         if (quantity <= 0)
-            return Result<bool>.Failure("Quantity must be greater than zero.");
+            return Result<bool>.Failure("BAD_REQUEST", "Quantity must be greater than zero.");
 
         Quantity = quantity;
         return Result<bool>.Success(true);

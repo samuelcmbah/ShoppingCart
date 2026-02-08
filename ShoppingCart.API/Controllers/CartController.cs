@@ -7,14 +7,9 @@ namespace ShoppingCart.API.Controllers
 {
     [Route("api/cart")]
     [ApiController]
-    public class CartController : ControllerBase
+    public class CartController(ICartService cartService) : ControllerBase
     {
-        private readonly ICartService _cartService;
-
-        public CartController(ICartService cartService)
-        {
-            _cartService = cartService;
-        }
+        private readonly ICartService _cartService = cartService;
 
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -23,7 +18,7 @@ namespace ShoppingCart.API.Controllers
         {
             var items = _cartService.GetItems();
             var summary = _cartService.GetCartSummary();
-            if (!items.Any())
+            if (items.Count == 0)
             {
                 return Ok(new CartResponse
                 {
@@ -57,7 +52,7 @@ namespace ShoppingCart.API.Controllers
                 return BadRequest(result.Error);
             }
 
-            return Ok(result.Value);
+            return Ok(result.Data);
         }
 
         [HttpPut("{itemId:guid}")]
@@ -72,7 +67,7 @@ namespace ShoppingCart.API.Controllers
                 return NotFound(result.Error);
             }
 
-            return Ok(result.Value);
+            return Ok(result.Data);
         }
 
         [HttpDelete("{itemId:guid}")]
