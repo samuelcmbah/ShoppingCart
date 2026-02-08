@@ -1,6 +1,15 @@
-﻿namespace ShoppingCart.API.Services
+﻿using ShoppingCart.Api.Common;
+using ShoppingCart.Api.Models;
+
+namespace ShoppingCart.Api.Services;
+
+public interface ICartService
 {
-    public class ICartSevice
-    {
-    }
+    Result<CartItem> AddItem(AddItemRequest request);
+
+    Result<CartItem> UpdateItem(Guid itemId, UpdateItemRequest request);
+
+    Result<bool> RemoveItem(Guid itemId);
+
+    IReadOnlyCollection<CartItem> GetItems();
 }
