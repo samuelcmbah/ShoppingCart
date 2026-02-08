@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using ShoppingCart.Api.Models;
 using ShoppingCart.Api.Services;
+using ShoppingCart.API.DTOs;
 
 namespace ShoppingCart.API.Controllers
 {

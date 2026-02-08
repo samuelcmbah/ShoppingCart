@@ -1,5 +1,6 @@
 ﻿using ShoppingCart.Api.Common;
 using ShoppingCart.Api.Models;
+using ShoppingCart.API.DTOs;
 
 namespace ShoppingCart.Api.Services;
 
