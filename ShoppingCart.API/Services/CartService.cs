@@ -21,7 +21,6 @@ public class CartService : ICartService
 
         var item = new CartItem
         {
-            Id = Guid.NewGuid(),
             ProductName = request.ProductName,
             Price = request.Price,
             Quantity = request.Quantity
