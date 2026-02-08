@@ -13,6 +13,10 @@ public class CartService : ICartService
         {
             return Result<CartItem>.Failure("Quantity must be greater than zero.");
         }
+        if (request.Price <= 0)
+        {
+            return Result<CartItem>.Failure("Price must be greater than zero.");
+        }
 
         var item = new CartItem
         {
