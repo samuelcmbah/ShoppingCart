@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping Cart</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .summary {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 30px;
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .summary-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .summary-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .summary-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .form-section {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 6px;
+            margin-bottom: 30px;
+        }
+
+        .form-section h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .form-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+
+        .input-wrapper {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 5px;
+        }
+
+        input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            width: 200px;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .error {
+            background-color: #f44336;
+            color: white;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .success {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 500;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-update {
+            background-color: #2196F3;
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .btn-update:hover {
+            background-color: #0b7dda;
+        }
+
+        .btn-delete {
+            background-color: #f44336;
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .btn-delete:hover {
+            background-color: #da190b;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .quantity-input {
+            width: 60px;
+            padding: 4px 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Shopping Cart</h1>
+        
+        <div class="summary" id="summary">
+            <div class="summary-item">
+                <span class="summary-label">Unique Items</span>
+                <span class="summary-value" id="uniqueItems">0</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Total Quantity</span>
+                <span class="summary-value" id="totalQuantity">0</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Total Amount</span>
+                <span class="summary-value" id="totalAmount">$0.00</span>
+            </div>
+        </div>
+
+        <div id="errorMessage" class="error"></div>
+        <div id="successMessage" class="success"></div>
+
+        <div class="form-section">
+            <h2>Add New Item</h2>
+            <form id="addItemForm" class="form-group">
+                <div class="input-wrapper">
+                    <label for="productName">Product Name</label>
+                    <input type="text" id="productName" required maxlength="100">
+                </div>
+                <div class="input-wrapper">
+                    <label for="price">Price</label>
+                    <input type="number" id="price" step="0.01" min="0.01" required>
+                </div>
+                <div class="input-wrapper">
+                    <label for="quantity">Quantity</label>
+                    <input type="number" id="quantity" min="1" max="1000" required>
+                </div>
+                <button type="submit">Add to Cart</button>
+            </form>
+        </div>
+
+        <h2>Cart Items</h2>
+        <div id="cartItems"></div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:5170/api/cart';
+
+        // Load cart items on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCartItems();
+        });
+
+        // Add item form submission
+        document.getElementById('addItemForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const productName = document.getElementById('productName').value;
+            const price = parseFloat(document.getElementById('price').value);
+            const quantity = parseInt(document.getElementById('quantity').value);
+
+            try {
+                const response = await fetch(API_BASE_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ productName, price, quantity })
+                });
+
+                if (response.ok) {
+                    showSuccess('Item added successfully!');
+                    document.getElementById('addItemForm').reset();
+                    loadCartItems();
+                } else {
+                    const error = await response.json();
+                    showError(error.message || 'Failed to add item');
+                }
+            } catch (error) {
+                showError('Error connecting to server. Make sure the API is running.');
+            }
+        });
+
+        // Load cart items from API
+        async function loadCartItems() {
+            try {
+                const response = await fetch(API_BASE_URL);
+                const data = await response.json();
+
+                updateSummary(data.summaryDto);
+                renderCartItems(data.items);
+            } catch (error) {
+                showError('Error loading cart items. Make sure the API is running on http://localhost:5170');
+            }
+        }
+
+        // Update summary section
+        function updateSummary(summary) {
+            document.getElementById('uniqueItems').textContent = summary.uniqueItems || 0;
+            document.getElementById('totalQuantity').textContent = summary.totalQuantity || 0;
+            document.getElementById('totalAmount').textContent = `$${(summary.totalAmount || 0).toFixed(2)}`;
+        }
+
+        // Render cart items table
+        function renderCartItems(items) {
+            const cartItemsDiv = document.getElementById('cartItems');
+
+            if (!items || items.length === 0) {
+                cartItemsDiv.innerHTML = '<div class="empty-state">Your cart is empty. Add some items to get started!</div>';
+                return;
+            }
+
+            const table = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Product Name</th>
+                            <th>Price</th>
+                            <th>Quantity</th>
+                            <th>Total</th>
+                            <th>Added At</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${items.map(item => `
+                            <tr>
+                                <td>${item.productName}</td>
+                                <td>$${item.price.toFixed(2)}</td>
+                                <td>${item.quantity}</td>
+                                <td>$${item.totalPrice.toFixed(2)}</td>
+                                <td>${new Date(item.addedAt).toLocaleString()}</td>
+                                <td>
+                                    <div class="actions">
+                                        <button class="btn-update" onclick="updateItem('${item.id}')">Update</button>
+                                        <button class="btn-delete" onclick="deleteItem('${item.id}')">Remove</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+
+            cartItemsDiv.innerHTML = table;
+        }
+
+        // Update item quantity
+        async function updateItem(itemId) {
+            const newQuantity = prompt('Enter new quantity (1-1000):');
+            
+            if (newQuantity === null) return; // User cancelled
+            
+            const quantity = parseInt(newQuantity);
+            
+            if (isNaN(quantity) || quantity < 1 || quantity > 1000) {
+                showError('Please enter a valid quantity between 1 and 1000');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/${itemId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ quantity })
+                });
+
+                if (response.ok) {
+                    showSuccess('Item updated successfully!');
+                    loadCartItems();
+                } else {
+                    const error = await response.json();
+                    showError(error.message || 'Failed to update item');
+                }
+            } catch (error) {
+                showError('Error updating item');
+            }
+        }
+
+        // Delete item
+        async function deleteItem(itemId) {
+            if (!confirm('Are you sure you want to remove this item?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/${itemId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok || response.status === 204) {
+                    showSuccess('Item removed successfully!');
+                    loadCartItems();
+                } else {
+                    const error = await response.json();
+                    showError(error.message || 'Failed to remove item');
+                }
+            } catch (error) {
+                showError('Error removing item');
+            }
+        }
+
+        // Show error message
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Show success message
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                successDiv.style.display = 'none';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
