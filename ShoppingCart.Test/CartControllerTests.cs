@@ -6,124 +6,149 @@ using ShoppingCart.Api.Models;
 using ShoppingCart.Api.Services;
 using ShoppingCart.API.Controllers;
 using ShoppingCart.API.DTOs;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace ShoppingCart.Test
+namespace ShoppingCart.Test;
+
+public class CartControllerTests
 {
-    public class CartControllerTests
+    private readonly ICartService _mockService;
+    private readonly CartController _sut;
+
+    public CartControllerTests()
     {
-        private readonly ICartService _mockService;
-        private readonly CartController _sut;
+        _mockService = Substitute.For<ICartService>();
+        _sut = new CartController(_mockService);
+    }
 
-        public CartControllerTests()
-        {
-            _mockService = Substitute.For<ICartService>();
-            _sut = new CartController(_mockService);
-        }
+    [Fact]
+    public void GetItems_WhenCartIsEmpty_ShouldReturnOkWithEmptyResponse()
+    {
+        // Arrange
+        _mockService.GetItems().Returns(new List<CartItem>());
+        _mockService.GetCartSummary().Returns(new CartSummaryDto());
 
-        private static CartItem CreateValidCartItem(string productName = "Apple", decimal amount = 10m, int quantity = 2)
-        {
-            return CartItem.Create(productName, amount, quantity).Data!;
-        }
+        // Act
+        var result = _sut.GetItems();
 
-        [Fact]
-        public void GetItems_EmptyCart_ShouldReturnHasItemsFalse()
-        {
-            _mockService.GetItems().Returns(new List<CartItem>());
+        // Assert
+        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        var response = okResult.Value.Should().BeOfType<CartResponse>().Subject;
+        response.HasItems.Should().BeFalse();
+        response.Items.Should().BeEmpty();
+        response.Message.Should().Be("No items in the cart");
+    }
 
-            var result = _sut.GetItems() as OkObjectResult;
+    [Fact]
+    public void GetItems_WhenCartHasItems_ShouldReturnOkWithItems()
+    {
+        // Arrange
+        var item = CartItem.Create("Apple", 10m, 2).Data!;
+        var items = new List<CartItem> { item };
+        _mockService.GetItems().Returns(items);
+        _mockService.GetCartSummary().Returns(new CartSummaryDto { UniqueItems = 1, TotalQuantity = 2 });
 
-            result!.Value.Should().BeOfType<CartResponse>();
-            var response = (CartResponse)result.Value!;
-            response.HasItems.Should().BeFalse();
-        }
+        // Act
+        var result = _sut.GetItems();
 
-        [Fact]
-        public void GetItems_WithItems_ShouldReturnHasItemsTrue()
-        {
-            var items = new List<CartItem> { CreateValidCartItem()};
-            _mockService.GetItems().Returns(items);
-            _mockService.GetCartSummary().Returns(new CartSummaryDto());
+        // Assert
+        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        var response = okResult.Value.Should().BeOfType<CartResponse>().Subject;
+        response.HasItems.Should().BeTrue();
+        response.Items.Should().HaveCount(1);
+        response.SummaryDto.UniqueItems.Should().Be(1);
+    }
 
-            var result = _sut.GetItems() as OkObjectResult;
+    [Fact]
+    public void AddItem_WithValidRequest_ShouldReturnOkWithCreatedItem()
+    {
+        // Arrange
+        var request = new AddItemRequest { ProductName = "Apple", Price = 5m, Quantity = 1 };
+        var createdItem = CartItem.Create("Apple", 5m, 1).Data!;
+        _mockService.AddItem(request).Returns(Result<CartItem>.Success(createdItem));
 
-            result!.Value.Should().BeOfType<CartResponse>();
-            var response = (CartResponse)result.Value!;
-            response.HasItems.Should().BeTrue();
-            response.Items.Should().HaveCount(1);
-        }
+        // Act
+        var result = _sut.AddItem(request);
 
-        [Fact]
-        public void AddItem_ValidRequest_ShouldReturnOk()
-        {
-            var request = new AddItemRequest { ProductName = "Apple", Price = 5, Quantity = 1 };
-            _mockService.AddItem(request).Returns(Result<CartItem>.Success(CreateValidCartItem()));
+        // Assert
+        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        var returnedItem = okResult.Value.Should().BeAssignableTo<CartItem>().Subject;
+        returnedItem.ProductName.Should().Be("Apple");
+        returnedItem.Price.Should().Be(5m);
+    }
 
-            var result = _sut.AddItem(request) as OkObjectResult;
+    [Fact]
+    public void AddItem_WithInvalidRequest_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var request = new AddItemRequest { ProductName = "Apple", Price = 0m, Quantity = 1 };
+        _mockService.AddItem(request).Returns(Result<CartItem>.Failure("BAD_REQUEST", "Invalid price"));
 
-            result.Should().NotBeNull();
-            result!.Value.Should().BeOfType<CartItem>();
-        }
+        // Act
+        var result = _sut.AddItem(request);
 
-        [Fact]
-        public void AddItem_InvalidRequest_ShouldReturnBadRequest()
-        {
-            var request = new AddItemRequest { ProductName = "Apple", Price = 0, Quantity = 1 };
-            _mockService.AddItem(request).Returns(Result<CartItem>.Failure("Invalid", "BAD_REQUEST"));
+        // Assert
+        var badRequestResult = result.Should().BeOfType<BadRequestObjectResult>().Subject;
+        badRequestResult.Value.Should().NotBeNull();
+    }
 
-            var result = _sut.AddItem(request) as BadRequestObjectResult;
+    [Fact]
+    public void UpdateItem_WithValidData_ShouldReturnOkWithUpdatedItem()
+    {
+        // Arrange
+        var itemId = Guid.NewGuid();
+        var request = new UpdateItemRequest { Quantity = 5 };
+        var updatedItem = CartItem.Create("Apple", 10m, 5).Data!;
+        _mockService.UpdateItem(itemId, request).Returns(Result<CartItem>.Success(updatedItem));
 
-            result.Should().NotBeNull();
-        }
+        // Act
+        var result = _sut.UpdateItem(itemId, request);
 
-        [Fact]
-        public void UpdateItem_Success_ShouldReturnOk()
-        {
-            var id = Guid.NewGuid();
-            var request = new UpdateItemRequest { Quantity = 5 };
-            _mockService.UpdateItem(id, request).Returns(Result<CartItem>.Success(CreateValidCartItem()));
+        // Assert
+        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        var returnedItem = okResult.Value.Should().BeAssignableTo<CartItem>().Subject;
+        returnedItem.Quantity.Should().Be(5);
+    }
 
-            var result = _sut.UpdateItem(id, request) as OkObjectResult;
+    [Fact]
+    public void UpdateItem_WithNonExistentId_ShouldReturnNotFound()
+    {
+        // Arrange
+        var itemId = Guid.NewGuid();
+        var request = new UpdateItemRequest { Quantity = 5 };
+        _mockService.UpdateItem(itemId, request).Returns(Result<CartItem>.Failure("NOT_FOUND", "Item not found"));
 
-            result.Should().NotBeNull();
-        }
+        // Act
+        var result = _sut.UpdateItem(itemId, request);
 
-        [Fact]
-        public void UpdateItem_NotFound_ShouldReturnNotFound()
-        {
-            var id = Guid.NewGuid();
-            var request = new UpdateItemRequest { Quantity = 5 };
-            _mockService.UpdateItem(id, request).Returns(Result<CartItem>.Failure("Not Found", "NOT_FOUND"));
+        // Assert
+        result.Should().BeOfType<NotFoundObjectResult>();
+    }
 
-            var result = _sut.UpdateItem(id, request) as NotFoundObjectResult;
+    [Fact]
+    public void RemoveItem_WithValidId_ShouldReturnNoContent()
+    {
+        // Arrange
+        var itemId = Guid.NewGuid();
+        _mockService.RemoveItem(itemId).Returns(Result<bool>.Success(true));
 
-            result.Should().NotBeNull();
-        }
+        // Act
+        var result = _sut.RemoveItem(itemId);
 
-        [Fact]
-        public void DeleteItem_Success_ShouldReturnNoContent()
-        {
-            var id = Guid.NewGuid();
-            _mockService.RemoveItem(id).Returns(Result<bool>.Success(true));
+        // Assert
+        result.Should().BeOfType<NoContentResult>();
+    }
 
-            var result = _sut.RemoveItem(id) as NoContentResult;
+    [Fact]
+    public void RemoveItem_WithNonExistentId_ShouldReturnNotFound()
+    {
+        // Arrange
+        var itemId = Guid.NewGuid();
+        _mockService.RemoveItem(itemId).Returns(Result<bool>.Failure("NOT_FOUND", "Item not found"));
 
-            result.Should().NotBeNull();
-        }
+        // Act
+        var result = _sut.RemoveItem(itemId);
 
-        [Fact]
-        public void DeleteItem_NotFound_ShouldReturnNotFound()
-        {
-            var id = Guid.NewGuid();
-            _mockService.RemoveItem(id).Returns(Result<bool>.Failure("Not found", "NOT_FOUND"));
-
-            var result = _sut.RemoveItem(id) as NotFoundObjectResult;
-
-            result.Should().NotBeNull();
-        }
+        // Assert
+        result.Should().BeOfType<NotFoundObjectResult>();
     }
 }

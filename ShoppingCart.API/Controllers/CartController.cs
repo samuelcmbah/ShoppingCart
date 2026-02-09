@@ -58,6 +58,7 @@ namespace ShoppingCart.API.Controllers
         [HttpPut("{itemId:guid}")]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public IActionResult UpdateItem(Guid itemId, [FromBody] UpdateItemRequest request)
         {
             var result = _cartService.UpdateItem(itemId, request);

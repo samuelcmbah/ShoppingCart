@@ -1,13 +1,9 @@
 ﻿using FluentAssertions;
 using ShoppingCart.Api.Services;
 using ShoppingCart.API.DTOs;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ShoppingCart.Test;
+
 public class CartServiceTests
 {
     private readonly CartService _service;
@@ -18,87 +14,158 @@ public class CartServiceTests
     }
 
     [Fact]
-    public void AddItem_ValidRequest_ShouldReturnCartItem()
+    public void AddItem_WithValidRequest_ShouldAddItemToCart()
     {
-        var request = new AddItemRequest { ProductName = "Apple", Price = 10, Quantity = 2 };
+        // Arrange
+        var request = new AddItemRequest
+        {
+            ProductName = "Apple",
+            Price = 10m,
+            Quantity = 2
+        };
+
+        // Act
         var result = _service.AddItem(request);
 
+        // Assert
         result.IsSuccess.Should().BeTrue();
+        result.Data.Should().NotBeNull();
         result.Data!.ProductName.Should().Be("Apple");
-        _service.GetItems().Count.Should().Be(1);
+        result.Data.Price.Should().Be(10m);
+        result.Data.Quantity.Should().Be(2);
+        _service.GetItems().Should().HaveCount(1);
     }
 
     [Fact]
-    public void AddItem_InvalidRequest_ShouldReturnFailure()
+    public void AddItem_WithInvalidPrice_ShouldReturnFailure()
     {
-        var request = new AddItemRequest { ProductName = "Apple", Price = 0, Quantity = 2 };
+        // Arrange
+        var request = new AddItemRequest
+        {
+            ProductName = "Apple",
+            Price = 0m,
+            Quantity = 2
+        };
+
+        // Act
         var result = _service.AddItem(request);
 
+        // Assert
         result.IsSuccess.Should().BeFalse();
+        result.Error.Should().NotBeNull();
         result.Error!.Code.Should().Be("BAD_REQUEST");
         _service.GetItems().Should().BeEmpty();
     }
 
     [Fact]
-    public void UpdateItem_Success_ShouldModifyQuantity()
+    public void UpdateItem_WithValidData_ShouldModifyQuantity()
     {
-        var addResult = _service.AddItem(new AddItemRequest { ProductName = "Banana", Price = 5, Quantity = 3 });
-        var updateResult = _service.UpdateItem(addResult.Data!.Id, new UpdateItemRequest { Quantity = 10 });
+        // Arrange
+        var addResult = _service.AddItem(new AddItemRequest
+        {
+            ProductName = "Banana",
+            Price = 5m,
+            Quantity = 3
+        });
+        var itemId = addResult.Data!.Id;
+        var updateRequest = new UpdateItemRequest { Quantity = 10 };
 
-        updateResult.IsSuccess.Should().BeTrue();
-        updateResult.Data!.Quantity.Should().Be(10);
+        // Act
+        var result = _service.UpdateItem(itemId, updateRequest);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Data.Should().NotBeNull();
+        result.Data!.Quantity.Should().Be(10);
+        result.Data.Id.Should().Be(itemId);
     }
 
     [Fact]
-    public void UpdateItem_NonExistent_ShouldReturnFailure()
+    public void UpdateItem_WithNonExistentId_ShouldReturnFailure()
     {
-        var result = _service.UpdateItem(Guid.NewGuid(), new UpdateItemRequest { Quantity = 5 });
+        // Arrange
+        var nonExistentId = Guid.NewGuid();
+        var request = new UpdateItemRequest { Quantity = 5 };
 
+        // Act
+        var result = _service.UpdateItem(nonExistentId, request);
+
+        // Assert
         result.IsSuccess.Should().BeFalse();
+        result.Error.Should().NotBeNull();
         result.Error!.Code.Should().Be("NOT_FOUND");
     }
 
     [Fact]
-    public void RemoveItem_Success_ShouldRemoveItem()
+    public void RemoveItem_WithValidId_ShouldRemoveItem()
     {
-        var addResult = _service.AddItem(new AddItemRequest { ProductName = "Orange", Price = 2, Quantity = 2 });
-        var removeResult = _service.RemoveItem(addResult.Data!.Id);
+        // Arrange
+        var addResult = _service.AddItem(new AddItemRequest
+        {
+            ProductName = "Orange",
+            Price = 2m,
+            Quantity = 2
+        });
+        var itemId = addResult.Data!.Id;
 
-        removeResult.IsSuccess.Should().BeTrue();
+        // Act
+        var result = _service.RemoveItem(itemId);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Data.Should().BeTrue();
         _service.GetItems().Should().BeEmpty();
     }
 
     [Fact]
-    public void RemoveItem_NonExistent_ShouldReturnFailure()
+    public void RemoveItem_WithNonExistentId_ShouldReturnFailure()
     {
-        var result = _service.RemoveItem(Guid.NewGuid());
+        // Arrange
+        var nonExistentId = Guid.NewGuid();
 
+        // Act
+        var result = _service.RemoveItem(nonExistentId);
+
+        // Assert
         result.IsSuccess.Should().BeFalse();
+        result.Error.Should().NotBeNull();
         result.Error!.Code.Should().Be("NOT_FOUND");
     }
 
     [Fact]
-    public void GetCartSummary_ShouldReturnCorrectTotals()
+    public void GetCartSummary_ShouldCalculateCorrectTotals()
     {
-        _service.AddItem(new AddItemRequest { ProductName = "Item1", Price = 10, Quantity = 2 });
-        _service.AddItem(new AddItemRequest { ProductName = "Item2", Price = 5, Quantity = 3 });
+        // Arrange
+        _service.AddItem(new AddItemRequest { ProductName = "Item1", Price = 10m, Quantity = 2 });
+        _service.AddItem(new AddItemRequest { ProductName = "Item2", Price = 5m, Quantity = 3 });
 
+        // Act
         var summary = _service.GetCartSummary();
 
+        // Assert
         summary.UniqueItems.Should().Be(2);
         summary.TotalQuantity.Should().Be(5);
-        summary.TotalAmount.Should().Be(15); 
+        summary.TotalAmount.Should().Be(15m);
     }
 
     [Fact]
-    public void CompleteWorkflow_ShouldAddUpdateRemoveSuccessfully()
+    public void CompleteWorkflow_ShouldHandleAddUpdateRemoveCorrectly()
     {
-        var addResult = _service.AddItem(new AddItemRequest { ProductName = "ItemX", Price = 1, Quantity = 1 });
-        var updateResult = _service.UpdateItem(addResult.Data!.Id, new UpdateItemRequest { Quantity = 5 });
-        var removeResult = _service.RemoveItem(addResult.Data!.Id);
+        // Arrange
+        var addRequest = new AddItemRequest { ProductName = "Workflow Item", Price = 100m, Quantity = 1 };
 
+        // Act & Assert - Add
+        var addResult = _service.AddItem(addRequest);
         addResult.IsSuccess.Should().BeTrue();
+        _service.GetItems().Should().HaveCount(1);
+
+        // Act & Assert - Update
+        var updateResult = _service.UpdateItem(addResult.Data!.Id, new UpdateItemRequest { Quantity = 5 });
         updateResult.IsSuccess.Should().BeTrue();
+        updateResult.Data!.Quantity.Should().Be(5);
+
+        // Act & Assert - Remove
+        var removeResult = _service.RemoveItem(addResult.Data.Id);
         removeResult.IsSuccess.Should().BeTrue();
         _service.GetItems().Should().BeEmpty();
     }

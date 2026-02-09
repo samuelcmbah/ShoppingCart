@@ -1,54 +1,71 @@
 ﻿using FluentAssertions;
 using ShoppingCart.Api.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ShoppingCart.Test;
 
 public class CartItemTests
 {
-
     [Fact]
-    public void Create_WithValidInput_ShouldReturnSuccess()
+    public void Create_WithValidInput_ShouldReturnSuccessResult()
     {
-        var result = CartItem.Create("Running Shoes", 200.5m, 2);
+        // Arrange
+        var productName = "Running Shoes";
+        var price = 200.5m;
+        var quantity = 2;
 
+        // Act
+        var result = CartItem.Create(productName, price, quantity);
+
+        // Assert
         result.IsSuccess.Should().BeTrue();
         result.Data.Should().NotBeNull();
-        result.Data!.ProductName.Should().Be("Running Shoes");
-        result.Data.Price.Should().Be(200.5m);
-        result.Data.Quantity.Should().Be(2);
+        result.Data!.ProductName.Should().Be(productName);
+        result.Data.Price.Should().Be(price);
+        result.Data.Quantity.Should().Be(quantity);
+        result.Data.Id.Should().NotBeEmpty();
     }
 
     [Fact]
-    public void Create_WithZeroPrice_ShouldReturnFailure()
+    public void Create_WithInvalidPrice_ShouldReturnFailure()
     {
-        var result = CartItem.Create("Garmin watch", 0, 2);
+        // Arrange & Act
+        var result = CartItem.Create("Garmin Watch", 0m, 2);
 
+        // Assert
         result.IsSuccess.Should().BeFalse();
+        result.Error.Should().NotBeNull();
         result.Error!.Code.Should().Be("BAD_REQUEST");
+        result.Error.Message.Should().Contain("Price");
+        result.Data.Should().BeNull();
     }
 
     [Fact]
-    public void UpdateQuantity_WithValidQuantity_ShouldSucceed()
+    public void UpdateQuantity_WithValidQuantity_ShouldUpdate()
     {
-        var itemResult = CartItem.Create("Running shorts", 50, 3);
-        var updateResult = itemResult.Data!.UpdateQuantity(10);
+        // Arrange
+        var item = CartItem.Create("Running Shorts", 50m, 3).Data!;
+        var newQuantity = 10;
 
-        updateResult.IsSuccess.Should().BeTrue();
-        itemResult.Data.Quantity.Should().Be(10);
+        // Act
+        var result = item.UpdateQuantity(newQuantity);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        item.Quantity.Should().Be(newQuantity);
     }
 
     [Fact]
     public void TotalPrice_ShouldCalculateCorrectly()
     {
-        var itemResult = CartItem.Create("Runnning arm bands", 2.5m, 4);
+        // Arrange
+        var price = 2.5m;
+        var quantity = 4;
+        var item = CartItem.Create("Running Arm Bands", price, quantity).Data!;
 
-        itemResult.Data!.TotalPrice.Should().Be(10m); // 2.5 * 4
+        // Act
+        var totalPrice = item.TotalPrice;
+
+        // Assert
+        totalPrice.Should().Be(10m);
     }
-
 }
-
