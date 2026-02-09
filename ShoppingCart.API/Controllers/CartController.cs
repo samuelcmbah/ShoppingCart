@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using ShoppingCart.Api.Common;
 using ShoppingCart.Api.Services;
 using ShoppingCart.API.DTOs;
 
@@ -65,7 +66,7 @@ namespace ShoppingCart.API.Controllers
 
             if (!result.IsSuccess)
             {
-                return NotFound(result.Error);
+                HandleError(result.Error!);
             }
 
             return Ok(result.Data);
@@ -84,6 +85,19 @@ namespace ShoppingCart.API.Controllers
             }
 
             return NoContent();
+        }
+
+        /// <summary>
+        /// Maps error codes to appropriate HTTP responses
+        /// </summary>
+        private IActionResult HandleError(Error error)
+        {
+            return error.Code switch
+            {
+                "NOT_FOUND" => NotFound(error),
+                "BAD_REQUEST" => BadRequest(error),
+                _ => BadRequest(error) // Default fallback for unexpected errors
+            };
         }
     }
 }
