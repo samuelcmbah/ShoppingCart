@@ -66,7 +66,7 @@ namespace ShoppingCart.API.Controllers
 
             if (!result.IsSuccess)
             {
-                HandleError(result.Error!);
+                return HandleError(result.Error!);
             }
 
             return Ok(result.Data);
