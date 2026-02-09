@@ -216,7 +216,7 @@
             </div>
             <div class="summary-item">
                 <span class="summary-label">Total Amount</span>
-                <span class="summary-value" id="totalAmount">$0.00</span>
+                <span class="summary-value" id="totalAmount">₦0.00</span>
             </div>
         </div>
 
@@ -247,7 +247,7 @@
     </div>
 
     <script>
-        const API_BASE_URL = 'http://localhost:5170/api/cart';
+        const API_BASE_URL = 'https://localhost:7077/api/cart';
 
         // Load cart items on page load
         document.addEventListener('DOMContentLoaded', () => {
@@ -293,7 +293,7 @@
                 updateSummary(data.summaryDto);
                 renderCartItems(data.items);
             } catch (error) {
-                showError('Error loading cart items. Make sure the API is running on http://localhost:5170');
+                showError('Error loading cart items. Make sure the API is running on https://localhost:7077');
             }
         }
 
@@ -301,7 +301,7 @@
         function updateSummary(summary) {
             document.getElementById('uniqueItems').textContent = summary.uniqueItems || 0;
             document.getElementById('totalQuantity').textContent = summary.totalQuantity || 0;
-            document.getElementById('totalAmount').textContent = `$${(summary.totalAmount || 0).toFixed(2)}`;
+            document.getElementById('totalAmount').textContent = `₦${(summary.totalAmount || 0).toFixed(2)}`;
         }
 
         // Render cart items table
@@ -413,7 +413,7 @@
             
             setTimeout(() => {
                 errorDiv.style.display = 'none';
-            }, 5000);
+            }, 3000);
         }
 
         // Show success message
